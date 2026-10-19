@@ -1,14 +1,15 @@
 /*
  * Builds downloadable PNG and SVG files of a QR code, including the light
  * border (quiet zone) that scanners need around the code. Needs qrcode.js.
+ * Pass the same options as the code on screen and the files match it,
+ * colours, logo and rounded corners included.
  *
  * @example
- * QRExport.png({ text : "https://example.com", logo : elImage }).then(function (oBlob) {
+ * QRExport.png({ text : "https://example.com", logo : elImage, cornerRadius : 0.05 }).then(function (oBlob) {
  *    QRExport.download(oBlob, "qr-code.png");
  * });
  */
 var QRExport = (function () {
-	var SVG_NS = "http://www.w3.org/2000/svg";
 	var XLINK_NS = "http://www.w3.org/1999/xlink";
 	var QUIET_ZONE = 4; // modules of light border, as the QR spec asks
 	var TARGET_SIZE = 1024; // pixels for PNG, and the default size of the SVG
@@ -19,7 +20,7 @@ var QRExport = (function () {
 	 * @private
 	 * @param {Object} htOption QRCode options; text is required
 	 * @param {Boolean} bSVG
-	 * @param {Number} nSize CSS pixel size of the code
+	 * @param {Number} nSize CSS pixel size of the whole image, quiet zone included
 	 */
 	function make(htOption, bSVG, nSize) {
 		var el = document.createElement("div");
@@ -29,6 +30,7 @@ var QRExport = (function () {
 		oOption.width = nSize;
 		oOption.height = nSize;
 		oOption.useSVG = bSVG;
+		oOption.quietZone = QUIET_ZONE;
 
 		return { el : el, qrcode : new QRCode(el, oOption) };
 	}
@@ -41,19 +43,11 @@ var QRExport = (function () {
 		return new Promise(function (resolve, reject) {
 			// Size every module to a whole number of pixels so edges stay crisp
 			var nCount = make(htOption, true, TARGET_SIZE).qrcode.getModuleCount();
-			var nModule = Math.max(1, Math.floor(TARGET_SIZE / (nCount + 2 * QUIET_ZONE)));
-			var nCode = nModule * nCount;
-			var nRatio = window.devicePixelRatio || 1;
-			// The canvas drawer scales by devicePixelRatio; undo that so it renders nCode pixels exactly
-			var elSource = make(htOption, false, nCode / nRatio).el.querySelector("canvas");
-			var elOut = document.createElement("canvas");
-			var oContext = elOut.getContext("2d");
+			var nTotal = Math.max(1, Math.floor(TARGET_SIZE / (nCount + 2 * QUIET_ZONE))) * (nCount + 2 * QUIET_ZONE);
+			// The canvas drawer scales by devicePixelRatio; undo that so it renders nTotal pixels exactly
+			var elCanvas = make(htOption, false, nTotal / (window.devicePixelRatio || 1)).el.querySelector("canvas");
 
-			elOut.width = elOut.height = nModule * (nCount + 2 * QUIET_ZONE);
-			oContext.fillStyle = htOption.colorLight || "#ffffff";
-			oContext.fillRect(0, 0, elOut.width, elOut.height);
-			oContext.drawImage(elSource, nModule * QUIET_ZONE, nModule * QUIET_ZONE, nCode, nCode);
-			elOut.toBlob(function (oBlob) {
+			elCanvas.toBlob(function (oBlob) {
 				if (oBlob) {
 					resolve(oBlob);
 				} else {
@@ -68,23 +62,11 @@ var QRExport = (function () {
 	 * @return {Promise<Blob>} a standalone SVG file; any logo is embedded in it
 	 */
 	function svg(htOption) {
-		var oCode = make(htOption, true, TARGET_SIZE);
-		var elSVG = oCode.el.querySelector("svg");
-		var nCount = oCode.qrcode.getModuleCount();
-		var nTotal = nCount + 2 * QUIET_ZONE;
-		var elBack = document.createElementNS(SVG_NS, "rect");
+		var elSVG = make(htOption, true, TARGET_SIZE).el.querySelector("svg");
 		var aImages = elSVG.querySelectorAll("image");
 
-		elSVG.setAttribute("viewBox", -QUIET_ZONE + " " + -QUIET_ZONE + " " + nTotal + " " + nTotal);
 		elSVG.setAttribute("width", TARGET_SIZE);
 		elSVG.setAttribute("height", TARGET_SIZE);
-
-		elBack.setAttribute("x", -QUIET_ZONE);
-		elBack.setAttribute("y", -QUIET_ZONE);
-		elBack.setAttribute("width", nTotal);
-		elBack.setAttribute("height", nTotal);
-		elBack.setAttribute("fill", htOption.colorLight || "#ffffff");
-		elSVG.insertBefore(elBack, elSVG.firstChild);
 
 		// Older SVG editors only understand xlink:href
 		for (var i = 0; i < aImages.length; i++) {
@@ -114,5 +96,5 @@ var QRExport = (function () {
 		setTimeout(function () { URL.revokeObjectURL(sURL); }, 1000);
 	}
 
-	return { png : png, svg : svg, download : download };
+	return { QUIET_ZONE : QUIET_ZONE, png : png, svg : svg, download : download };
 })();

@@ -14,6 +14,7 @@
 <script src="js/hold-button.js"></script>
 <script src="js/qr-export.js"></script>
 <script src="js/decrypted-text.js"></script>
+<script src="js/nord-picker.js"></script>
 </head>
 <body>
 <div class="page">
@@ -51,6 +52,24 @@
 						</div>
 						<small id="logo-hint">PNG, JPG, SVG or WebP up to 5 MB. It goes in the centre when you hold Generate, and stays on your device.</small>
 					</div>
+					<div class="field">
+						<span class="field-label">STYLE</span>
+						<div class="style-row">
+							<div class="swatch">
+								<input id="color-dark" type="color" value="#2e3440" />
+								<span>Code</span>
+							</div>
+							<div class="swatch">
+								<input id="color-light" type="color" value="#eceff4" />
+								<span>Background</span>
+							</div>
+							<label class="corners">
+								<span>Corners <output id="radius-value" for="radius">5%</output></span>
+								<input id="radius" type="range" min="0" max="15" step="1" value="5" />
+							</label>
+						</div>
+						<small id="style-hint">Applied when you hold Generate. Download matches what you see.</small>
+					</div>
 					<button id="generate" class="generate"></button>
 				</div>
 				<div class="result">
@@ -82,14 +101,18 @@
 </div>
 
 <script>
-var QR_DARK = "#2e3440";
-var QR_LIGHT = "#eceff4";
+var elColorDark = document.getElementById("color-dark");
+var elColorLight = document.getElementById("color-light");
+var elRadius = document.getElementById("radius");
 
+new NordPicker(elColorDark, { label : "Code colour" });
+new NordPicker(elColorLight, { label : "Background colour" });
+
+// Same quiet zone as the downloads, so the preview is exactly what you get
 var qrcode = new QRCode(document.getElementById("qrcode"), {
-	width : 200,
-	height : 200,
-	colorDark : QR_DARK,
-	colorLight : QR_LIGHT
+	width : 232,
+	height : 232,
+	quietZone : QRExport.QUIET_ZONE
 });
 
 var elText = document.getElementById("text");
@@ -98,8 +121,7 @@ var sHint = elHint.textContent;
 // The chosen logo waits here until Generate is held
 var elPendingLogo = null;
 // What the code on screen was made from, so Download matches it
-var sGeneratedText = "";
-var elGeneratedLogo = null;
+var oGenerated = null;
 
 function makeCode () {
 	if (!elText.value) {
@@ -109,10 +131,17 @@ function makeCode () {
 		return;
 	}
 
-	qrcode.setLogo(elPendingLogo);
+	var oStyle = {
+		colorDark : elColorDark.value,
+		colorLight : elColorLight.value,
+		cornerRadius : elRadius.value / 100,
+		logo : elPendingLogo
+	};
+
+	qrcode.setOptions(oStyle);
 	qrcode.makeCode(elText.value);
-	sGeneratedText = elText.value;
-	elGeneratedLogo = elPendingLogo;
+	oStyle.text = elText.value;
+	oGenerated = oStyle;
 }
 
 elText.addEventListener("input", function () {
@@ -194,6 +223,46 @@ elLogo.addEventListener("change", function () {
 
 elLogoRemove.addEventListener("click", removeLogo);
 
+var elStyleHint = document.getElementById("style-hint");
+var sStyleHint = elStyleHint.textContent;
+var elRadiusValue = document.getElementById("radius-value");
+
+// Relative luminance of a #rrggbb colour, as used for WCAG contrast
+function luminance (sHex) {
+	var aRGB = [1, 3, 5].map(function (i) {
+		var n = parseInt(sHex.substr(i, 2), 16) / 255;
+		return n <= 0.03928 ? n / 12.92 : Math.pow((n + 0.055) / 1.055, 2.4);
+	});
+
+	return 0.2126 * aRGB[0] + 0.7152 * aRGB[1] + 0.0722 * aRGB[2];
+}
+
+// Scanners want dark boxes on a light background with plenty of contrast
+function checkStyle () {
+	var nDark = luminance(elColorDark.value);
+	var nLight = luminance(elColorLight.value);
+	var sWarning = "";
+
+	if (nDark >= nLight) {
+		sWarning = "Light code on a dark background: many scanners can't read this.";
+	} else if ((nLight + 0.05) / (nDark + 0.05) < 4) {
+		sWarning = "Low contrast: some scanners may struggle. Try a darker code or a lighter background.";
+	}
+
+	elStyleHint.textContent = sWarning || sStyleHint;
+	elStyleHint.classList.toggle("is-error", !!sWarning);
+}
+
+elColorDark.addEventListener("input", checkStyle);
+elColorLight.addEventListener("input", checkStyle);
+elRadius.addEventListener("input", function () {
+	elRadiusValue.textContent = elRadius.value + "%";
+});
+
+// Browsers can restore these inputs on reload, so sync the labels to them
+elRadiusValue.textContent = elRadius.value + "%";
+checkStyle();
+
 var elOutputHint = document.getElementById("output-hint");
 var OUTPUT_HINTS = {
 	png : "Image, good for sharing and the web.",
@@ -215,11 +284,12 @@ document.getElementById("download").addEventListener("click", function () {
 	var sFormat = getFormat();
 
 	QRExport[sFormat]({
-		text : sGeneratedText,
-		colorDark : QR_DARK,
-		colorLight : QR_LIGHT,
+		text : oGenerated.text,
+		colorDark : oGenerated.colorDark,
+		colorLight : oGenerated.colorLight,
+		cornerRadius : oGenerated.cornerRadius,
 		correctLevel : QRCode.CorrectLevel.H,
-		logo : elGeneratedLogo
+		logo : oGenerated.logo
 	}).then(function (oBlob) {
 		QRExport.download(oBlob, "qr-code." + sFormat);
 	}, function () {

@@ -39,6 +39,10 @@ qrcode.setLogo(null); // remove the logo.
 
 A logo can also be passed up front with the `logo` option, and `logoSize` (default `0.22`) sets the size of its light backing square as a fraction of the code's width. Keep `correctLevel` at `H` when using a logo so the code still scans.
 
+To match what scanners and print need, `quietZone` adds a light border around the code (in modules; 4 is the standard) and `cornerRadius` rounds the outer corners (as a fraction of the full width, kept inside the quiet zone so it never cuts into the code; it has no effect without a quiet zone). Outside the rounded corners the image is transparent.
+
+`qrcode.setOptions({ colorDark, colorLight, logo, cornerRadius })` changes options for the next `makeCode()` call.
+
 Text is encoded as UTF-8, so any Unicode text (including emoji) works. Text longer than a version 40 code can hold throws `Error("Too long data")`.
 
 ## Using with a bundler

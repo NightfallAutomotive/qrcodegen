@@ -126,6 +126,31 @@ var svgLogo = new QRCode(mkEl('g'), { text: 'logo', useSVG: true, logo: logo });
 var svgParts = svgLogo._el.childNodes[0].childNodes;
 check(svgParts.some(function (k) { return k.tagName === 'image' && k.attrs.href === logo.src; }), 'SVG output has no logo image');
 
+// Quiet zone and rounded corners
+var framed = new QRCode(mkEl('g'), { text: 'frame', useSVG: true, quietZone: 4, cornerRadius: 0.05 });
+var framedSvg = framed._el.childNodes[0];
+var n = framed.getModuleCount();
+var back = framedSvg.childNodes[0];
+check(framedSvg.attrs.viewBox === '-4 -4 ' + (n + 8) + ' ' + (n + 8), 'SVG viewBox does not include the quiet zone: ' + framedSvg.attrs.viewBox);
+check(back.tagName === 'rect' && back.attrs.x === -4 && back.attrs.width === n + 8, 'SVG background does not cover the quiet zone');
+check(Math.abs(back.attrs.rx - 0.05 * (n + 8)) < 1e-9, 'SVG corner radius wrong: ' + back.attrs.rx);
+var capped = new QRCode(mkEl('g'), { text: 'frame', useSVG: true, quietZone: 4, cornerRadius: 0.5 })._el.childNodes[0].childNodes[0];
+check(capped.attrs.rx === 8, 'corner radius not capped to twice the quiet zone: ' + capped.attrs.rx);
+var unframed = new QRCode(mkEl('g'), { text: 'frame', useSVG: true, cornerRadius: 0.2 })._el.childNodes[0].childNodes[0];
+check(unframed.attrs.rx === 0, 'corners rounded without a quiet zone would cut the code: ' + unframed.attrs.rx);
+
+ctx2d.calls = [];
+var framedCanvas = new QRCode(mkEl('div'), { text: 'frame', width: 100, height: 100, quietZone: 4, cornerRadius: 0.05 });
+var backRound = ctx2d.calls.filter(function (c) { return c[0] === 'roundRect'; })[0];
+check(backRound && backRound[1] === 0 && backRound[3] === 200 && Math.abs(backRound[5] - 10) < 1e-9, 'canvas background not rounded to 5% of 200px: ' + backRound);
+
+var deferred = new QRCode(mkEl('g'), { text: 'a', useSVG: true });
+deferred.setOptions({ colorDark: '#123456' });
+var deferredPath = function () { return deferred._el.childNodes[0].childNodes[1].attrs.fill; };
+check(deferredPath() === '#000000', 'setOptions redrew before makeCode');
+deferred.makeCode('a');
+check(deferredPath() === '#123456', 'setOptions not applied by makeCode');
+
 // getModuleCount reports the size of the current code
 check(new QRCode(mkEl('div'), { width: 10, height: 10 }).getModuleCount() === 0, 'getModuleCount should be 0 before a code exists');
 check(new QRCode(mkEl('div'), { text: 'a', correctLevel: QRCode.CorrectLevel.L }).getModuleCount() === 21, 'getModuleCount should be 21 for a version 1 code');

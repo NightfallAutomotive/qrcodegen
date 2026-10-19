@@ -155,17 +155,35 @@ var QRCode;
 	this.length++;}};var QRCodeLimitLength=[[17,14,11,7],[32,26,20,14],[53,42,32,24],[78,62,46,34],[106,84,60,44],[134,106,74,58],[154,122,86,64],[192,152,108,84],[230,180,130,98],[271,213,151,119],[321,251,177,137],[367,287,203,155],[425,331,241,177],[458,362,258,194],[520,412,292,220],[586,450,322,250],[644,504,364,280],[718,560,394,310],[792,624,442,338],[858,666,482,382],[929,711,509,403],[1003,779,565,439],[1091,857,611,461],[1171,911,661,511],[1273,997,715,535],[1367,1059,751,593],[1465,1125,805,625],[1528,1190,868,658],[1628,1264,908,698],[1732,1370,982,742],[1840,1452,1030,790],[1952,1538,1112,842],[2068,1628,1168,898],[2188,1722,1228,958],[2303,1809,1283,983],[2431,1911,1351,1051],[2563,1989,1423,1093],[2699,2099,1499,1139],[2809,2213,1579,1219],[2953,2331,1663,1273]];
 	
 	/**
+	 * The light border (quiet zone) and rounded corners around the code
+	 *
+	 * @private
+	 * @param {Number} nCount modules along one side of the code
+	 * @param {Object} htOption QRCode Options
+	 * @return {Object} quiet zone, total size and corner radius, all in modules
+	 */
+	function _getFrame(nCount, htOption) {
+		var nQuiet = Math.max(0, htOption.quietZone || 0);
+		var nTotal = nCount + 2 * nQuiet;
+		// Keep the curve inside the quiet zone so it never cuts into the code
+		var nRadius = Math.min(Math.max(0, htOption.cornerRadius || 0) * nTotal, nQuiet * 2);
+
+		return { quiet : nQuiet, total : nTotal, radius : nRadius };
+	}
+
+	/**
 	 * Where to draw the centre logo, in the same units as nWidth and nHeight
 	 *
 	 * @private
 	 * @param {Number} nWidth
 	 * @param {Number} nHeight
 	 * @param {Object} htOption QRCode Options
+	 * @param {Number} [nCodeSize] size of the code without its quiet zone; defaults to the smaller side
 	 * @return {Object} the plate behind the logo and the logo itself
 	 */
-	function _getLogoBox(nWidth, nHeight, htOption) {
+	function _getLogoBox(nWidth, nHeight, htOption, nCodeSize) {
 		var elLogo = htOption.logo;
-		var nPlate = Math.min(nWidth, nHeight) * htOption.logoSize;
+		var nPlate = (nCodeSize || Math.min(nWidth, nHeight)) * htOption.logoSize;
 		var nInner = nPlate * 0.8;
 		var nRatio = (elLogo.naturalWidth || elLogo.width) / (elLogo.naturalHeight || elLogo.height) || 1;
 		// Fit the logo inside the plate without stretching it
@@ -199,7 +217,9 @@ var QRCode;
 				return el;
 			}
 
-			var svg = makeSVG("svg" , {'viewBox': '0 0 ' + String(nCount) + " " + String(nCount), 'width': '100%', 'height': '100%', 'fill': _htOption.colorLight, 'shape-rendering': 'crispEdges'});
+			var oFrame = _getFrame(nCount, _htOption);
+			var nQuiet = oFrame.quiet;
+			var svg = makeSVG("svg" , {'viewBox': -nQuiet + " " + -nQuiet + " " + oFrame.total + " " + oFrame.total, 'width': '100%', 'height': '100%', 'shape-rendering': 'crispEdges'});
 			_el.appendChild(svg);
 
 			// Draw every dark module as one path so no element ids are needed
@@ -213,7 +233,7 @@ var QRCode;
 				}
 			}
 
-			svg.appendChild(makeSVG("rect", {"fill": _htOption.colorLight, "width": "100%", "height": "100%"}));
+			svg.appendChild(makeSVG("rect", {"fill": _htOption.colorLight, "x": -nQuiet, "y": -nQuiet, "width": oFrame.total, "height": oFrame.total, "rx": oFrame.radius, "shape-rendering": oFrame.radius ? "auto" : "crispEdges"}));
 			svg.appendChild(makeSVG("path", {"fill": _htOption.colorDark, "d": aPath.join("")}));
 
 			if (_htOption.logo) {
@@ -229,6 +249,28 @@ var QRCode;
 		};
 		return Drawing;
 	})();
+
+	/**
+	 * Fill a rectangle with rounded corners, or a plain one when nRadius is 0
+	 *
+	 * @private
+	 */
+	function _fillRoundRect(oContext, nX, nY, nWidth, nHeight, nRadius) {
+		if (!nRadius) {
+			oContext.fillRect(nX, nY, nWidth, nHeight);
+			return;
+		}
+
+		oContext.beginPath();
+
+		if (oContext.roundRect) {
+			oContext.roundRect(nX, nY, nWidth, nHeight, nRadius);
+		} else {
+			oContext.rect(nX, nY, nWidth, nHeight);
+		}
+
+		oContext.fill();
+	}
 
 	// Drawing in Canvas
 	var canvasDrawer = (function () {
@@ -270,46 +312,44 @@ var QRCode;
 			var _oContext = this._oContext;
 			var _htOption = this._htOption;
 			var nCount = oQRCode.getModuleCount();
-			var nWidth = this._elCanvas.width / nCount;
-			var nHeight = this._elCanvas.height / nCount;
+			var oFrame = _getFrame(nCount, _htOption);
+			var nCanvasWidth = this._elCanvas.width;
+			var nCanvasHeight = this._elCanvas.height;
+			var nWidth = nCanvasWidth / oFrame.total;
+			var nHeight = nCanvasHeight / oFrame.total;
+			var nOffsetX = oFrame.quiet * nWidth;
+			var nOffsetY = oFrame.quiet * nHeight;
 
 			this.clear();
 
+			// Outside rounded corners stays transparent
 			_oContext.fillStyle = _htOption.colorLight;
-			_oContext.fillRect(0, 0, this._elCanvas.width, this._elCanvas.height);
+			_fillRoundRect(_oContext, 0, 0, nCanvasWidth, nCanvasHeight, oFrame.radius * Math.min(nWidth, nHeight));
 			_oContext.fillStyle = _htOption.colorDark;
-			
+
 			for (var row = 0; row < nCount; row++) {
 				for (var col = 0; col < nCount; col++) {
 					if (oQRCode.isDark(row, col)) {
 						// Snap module edges to whole pixels so neighbours don't leave anti-aliased seams
-						var nLeft = Math.round(col * nWidth);
-						var nTop = Math.round(row * nHeight);
+						var nLeft = Math.round(nOffsetX + col * nWidth);
+						var nTop = Math.round(nOffsetY + row * nHeight);
 
 						_oContext.fillRect(
 							nLeft,
 							nTop,
-							Math.round((col + 1) * nWidth) - nLeft,
-							Math.round((row + 1) * nHeight) - nTop
+							Math.round(nOffsetX + (col + 1) * nWidth) - nLeft,
+							Math.round(nOffsetY + (row + 1) * nHeight) - nTop
 						);
 					}
 				}
 			}
 
 			if (_htOption.logo) {
-				var oBox = _getLogoBox(this._elCanvas.width, this._elCanvas.height, _htOption);
+				var oBox = _getLogoBox(nCanvasWidth, nCanvasHeight, _htOption, nCount * Math.min(nWidth, nHeight));
 				var oPlate = oBox.plate;
 
 				_oContext.fillStyle = _htOption.colorLight;
-				_oContext.beginPath();
-
-				if (_oContext.roundRect) {
-					_oContext.roundRect(oPlate.x, oPlate.y, oPlate.size, oPlate.size, oPlate.radius);
-				} else {
-					_oContext.rect(oPlate.x, oPlate.y, oPlate.size, oPlate.size);
-				}
-
-				_oContext.fill();
+				_fillRoundRect(_oContext, oPlate.x, oPlate.y, oPlate.size, oPlate.size, oPlate.radius);
 				_oContext.drawImage(_htOption.logo, oBox.logo.x, oBox.logo.y, oBox.logo.width, oBox.logo.height);
 			}
 
@@ -426,6 +466,8 @@ var QRCode;
 	 * @param {Boolean} [vOption.useSVG=false] draw an SVG instead of a canvas image
 	 * @param {HTMLImageElement} [vOption.logo] loaded image drawn in the middle of the code
 	 * @param {Number} [vOption.logoSize=0.22] logo backing size as a fraction of the code width
+	 * @param {Number} [vOption.quietZone=0] light border around the code, in modules (scanners want 4)
+	 * @param {Number} [vOption.cornerRadius=0] corner rounding as a fraction of the full width; kept inside the quiet zone
 	 */
 	QRCode = function (el, vOption) {
 		this._htOption = {
@@ -435,7 +477,9 @@ var QRCode;
 			colorLight : "#ffffff",
 			correctLevel : QRErrorCorrectLevel.H,
 			logo : null,
-			logoSize : 0.22
+			logoSize : 0.22,
+			quietZone : 0,
+			cornerRadius : 0
 		};
 		
 		if (typeof vOption === 'string') {
@@ -481,9 +525,21 @@ var QRCode;
 	};
 
 	/**
+	 * Change options such as colorDark, colorLight, logo or cornerRadius
+	 * - Takes effect on the next makeCode; width, height and useSVG can't change
+	 *
+	 * @param {Object} vOption options to overwrite
+	 */
+	QRCode.prototype.setOptions = function (vOption) {
+		for (var i in vOption) {
+			this._htOption[i] = vOption[i];
+		}
+	};
+	
+	/**
 	 * Draw a logo in the middle of the code, or remove it
 	 * - Keep correctLevel at H so the code still scans with the logo covering it
-	 *
+	 * 
 	 * @param {HTMLImageElement|null} elLogo a fully loaded image, or null to remove the logo
 	 */
 	QRCode.prototype.setLogo = function (elLogo) {
