@@ -1,0 +1,282 @@
+/* =========================================================
+   NIGHTFALL QR
+   Nightfall Automotive — Nord Dark Theme
+   ========================================================= */
+
+/* ---------- Tokens & base ---------- */
+
+:root {
+  color-scheme: dark;
+  --bg: #242933;
+  --bg-deep: #20242d;
+  --panel: #2e3440;
+  --panel-light: #353d4c;
+  --border: #434c5e;
+  --text: #eceff4;
+  --muted: #aab4c5;
+  --dim: #7d899d;
+  --cyan: #88c0d0;
+  --purple: #b48ead;
+  --green: #a3be8c;
+  --red: #bf616a;
+  --radius: 12px;
+  --font: Inter, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+
+  /* QR codes stay dark-on-light so every scanner can read them */
+  --qr-dark: #2e3440;
+  --qr-light: #eceff4;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-height: 100%;
+  background: var(--bg-deep);
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(136, 192, 208, 0.08), transparent 48%),
+    var(--bg-deep);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+button,
+input,
+a {
+  font: inherit;
+}
+
+a {
+  color: var(--cyan);
+  text-decoration: none;
+}
+
+a:hover {
+  color: var(--text);
+}
+
+.page {
+  display: flex;
+  flex-direction: column;
+  width: min(960px, calc(100% - 32px));
+  min-height: 100vh;
+  min-height: 100dvh;
+  margin: 0 auto;
+  padding: 24px 0 18px;
+}
+
+main {
+  flex: 1;
+}
+
+/* ---------- Page header ---------- */
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 0 0 24px;
+  margin-bottom: 28px;
+  border-bottom: 1px solid rgba(136, 192, 208, 0.16);
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--text);
+}
+
+.brand:hover {
+  color: var(--text);
+}
+
+.brand-logo {
+  display: block;
+  width: auto;
+  height: 36px;
+}
+
+.brand-copy {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+  letter-spacing: 0.15em;
+}
+
+.brand-copy strong {
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.brand-copy > span {
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: 10px;
+  letter-spacing: 0.3em;
+}
+
+.page-tag {
+  color: var(--muted);
+  font-size: 11px;
+  letter-spacing: 0.18em;
+}
+
+.page-tag strong {
+  margin-left: 8px;
+  color: var(--purple);
+  font-size: 20px;
+}
+
+/* ---------- Tool panel ---------- */
+
+.panel {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--panel);
+}
+
+.panel-header {
+  padding: 30px 34px;
+  border-bottom: 1px solid var(--border);
+}
+
+.eyebrow {
+  margin: 0 0 10px;
+  color: var(--cyan);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+}
+
+h1 {
+  margin: 0;
+  color: var(--text);
+  font-size: clamp(30px, 4vw, 52px);
+  font-weight: 900;
+  line-height: 1.08;
+  letter-spacing: -0.045em;
+}
+
+h1 span {
+  color: var(--purple);
+}
+
+.intro {
+  max-width: 650px;
+  margin: 14px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.panel-body {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 34px;
+  align-items: start;
+  padding: 30px 34px;
+}
+
+.field label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+}
+
+.field input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.field input:focus {
+  outline: 2px solid var(--cyan);
+  outline-offset: 1px;
+}
+
+.field small {
+  display: block;
+  margin-top: 8px;
+  color: var(--dim);
+  font-size: 12px;
+}
+
+.field small.is-error {
+  color: var(--red);
+}
+
+/* Doubled class so it outranks .hold-button, which loads later */
+.generate.hold-button {
+  margin-top: 18px;
+  min-width: 200px;
+  border: 1px solid var(--border);
+}
+
+.qr-card {
+  padding: 16px;
+  border-radius: var(--radius);
+  background: var(--qr-light);
+  line-height: 0;
+}
+
+.qr-card img,
+.qr-card canvas,
+.qr-card svg {
+  display: block;
+}
+
+/* ---------- Footer ---------- */
+
+.page-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  padding: 20px 2px 0;
+  color: var(--dim);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+}
+
+/* ---------- Responsive ---------- */
+
+@media (max-width: 640px) {
+  .page-tag {
+    display: none;
+  }
+
+  .panel-header,
+  .panel-body {
+    padding: 22px 20px;
+  }
+
+  .panel-body {
+    grid-template-columns: 1fr;
+    justify-items: center;
+  }
+
+  .field {
+    width: 100%;
+  }
+
+  .page-footer {
+    flex-direction: column;
+    text-align: center;
+  }
+}

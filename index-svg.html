@@ -1,20 +1,61 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <title>Cross-Browser QRCode generator for Javascript</title>
+    <title>QR Code Generator (SVG) | Nightfall Automotive</title>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="theme-color" content="#20242d" />
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png" />
+    <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
+    <link rel="stylesheet" href="css/style.css" />
     <script src="qrcode.js"></script>
   </head>
   <body>
-  <input id="text" type="text" value="https://github.com/NightfallAutomotive/qrcodegen" style="width:80%" />
-  <svg xmlns="http://www.w3.org/2000/svg">
-    <g id="qrcode"/>
-  </svg>
+  <div class="page">
+    <header class="page-header">
+      <a class="brand" href="https://www.nightfallautomotive.co.uk/" aria-label="Nightfall Automotive home">
+        <img class="brand-logo" src="assets/nf-logo.png" alt="" width="50" height="36" />
+        <span class="brand-copy"><strong>NIGHTFALL</strong><span>AUTOMOTIVE</span></span>
+      </a>
+      <span class="page-tag">TOOLS <strong>QR</strong></span>
+    </header>
+
+    <main>
+      <section class="panel" aria-labelledby="page-title">
+        <div class="panel-header">
+          <p class="eyebrow">NIGHTFALL TOOLS // QR // SVG</p>
+          <h1 id="page-title">QR code <span>generator.</span></h1>
+          <p class="intro">Same generator, drawn as SVG so it scales to any size without blurring.</p>
+        </div>
+
+        <div class="panel-body">
+          <div class="field">
+            <label for="text">TEXT OR LINK</label>
+            <input id="text" type="text" value="https://www.nightfallautomotive.co.uk/" />
+            <small>Works with any text, including accents and emoji.</small>
+          </div>
+          <div class="qr-card">
+            <svg xmlns="http://www.w3.org/2000/svg" width="200" height="200">
+              <g id="qrcode"/>
+            </svg>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="page-footer">
+      <span>© NIGHTFALL AUTOMOTIVE</span>
+      <span>ECU REMAPPING · TUNING · DIAGNOSTICS</span>
+    </footer>
+  </div>
+
   <script>
   var qrcode = new QRCode(document.getElementById("qrcode"), {
-      width : 100,
-      height : 100,
+      width : 200,
+      height : 200,
+      colorDark : "#2e3440",
+      colorLight : "#eceff4",
       useSVG: true
   });
 
