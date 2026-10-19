@@ -10,11 +10,13 @@
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
 <link rel="stylesheet" href="css/style.css" />
 <link rel="stylesheet" href="css/hold-button.css" />
+<link rel="stylesheet" href="css/sticker-peel.css" />
 <script src="qrcode.js"></script>
 <script src="js/hold-button.js"></script>
 <script src="js/qr-export.js"></script>
 <script src="js/decrypted-text.js"></script>
 <script src="js/nord-picker.js"></script>
+<script src="js/sticker-peel.js"></script>
 </head>
 <body>
 <div class="page">
@@ -120,6 +122,8 @@ var elHint = document.getElementById("text-hint");
 var sHint = elHint.textContent;
 // The chosen logo waits here until Generate is held
 var elPendingLogo = null;
+// The preview drawn as a peelable sticker, when WebGL2 is available
+var oSticker = null;
 // What the code on screen was made from, so Download matches it
 var oGenerated = null;
 
@@ -142,6 +146,9 @@ function makeCode () {
 	qrcode.makeCode(elText.value);
 	oStyle.text = elText.value;
 	oGenerated = oStyle;
+
+	// A fresh code goes on as a fresh sticker
+	if (oSticker) oSticker.setImage(document.querySelector("#qrcode img").src, true);
 }
 
 elText.addEventListener("input", function () {
@@ -338,6 +345,35 @@ new DecryptedText(document.getElementById("page-title"), {
 	encryptedClassName : "encrypted",
 	clickMode : "once"
 });
+
+// WebGL decoration goes last of all
+var elCard = document.querySelector(".qr-card");
+
+oSticker = new StickerPeel(elCard, {
+	imageSrc : document.querySelector("#qrcode img").src,
+	width : 232,
+	finish : "matte",
+	peelBackHoverPct : 25,
+	peelBackActivePct : 40,
+	rotate : 0,
+	peelDirection : 0,
+	curlRadius : 6,
+	backColor : "#fafafa",
+	lightingIntensity : 0.5,
+	shadowIntensity : 0.6,
+	followPointer : true,
+	swing : 1.6,
+	friction : 0.35,
+	bounce : 0.35,
+	draggable : true,
+	intro : true
+});
+
+if (oSticker.supported) {
+	elCard.classList.add("is-sticker");
+} else {
+	oSticker = null;
+}
 </script>
 </body>
 </html>

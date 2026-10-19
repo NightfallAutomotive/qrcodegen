@@ -65,6 +65,8 @@ a:hover {
 }
 
 .page {
+  /* The sticker's canvas reaches past the card for its curl and shadow; never let it widen the page */
+  overflow-x: clip;
   display: flex;
   flex-direction: column;
   width: min(960px, calc(100% - 32px));
@@ -598,7 +600,26 @@ h1 .accent {
 
 /* The code image carries its own background, border and corners */
 .qr-card {
+  position: relative;
   line-height: 0;
+}
+
+/* Flat preview: lift it off the panel, with a faint light rim so dark backgrounds still show */
+.qr-card #qrcode img,
+.qr-card .sticker-peel-canvas {
+  filter:
+    drop-shadow(0 0 1px rgba(236, 239, 244, 0.45))
+    drop-shadow(0 10px 18px rgba(0, 0, 0, 0.45));
+}
+
+/* The sticker draws its own shadow; keep only the rim on it */
+.qr-card .sticker-peel-canvas {
+  filter: drop-shadow(0 0 1px rgba(236, 239, 244, 0.45));
+}
+
+/* The sticker replaces the flat image; it stays in place, invisible, for layout and screen readers */
+.qr-card.is-sticker #qrcode img {
+  opacity: 0;
 }
 
 .qr-card img,
