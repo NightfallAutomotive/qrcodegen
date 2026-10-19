@@ -1,6 +1,6 @@
 {
   "name": "qrcode.js",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "homepage": "https://github.com/davidshimjs/qrcodejs",
   "authors": [
     "Sangmin Shim", "Sangmin Shim <ssm0123@gmail.com> (http://jaguarjs.com)"
@@ -12,7 +12,6 @@
     "node_modules",
     "index.html",
     "index.svg",
-    "jquery.min.js",
     "qrcode.min.js"
   ]
 }

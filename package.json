@@ -1,0 +1,31 @@
+{
+  "name": "qrcodegen",
+  "version": "0.1.0",
+  "description": "Cross-browser QRCode generator for javascript",
+  "main": "qrcode.js",
+  "files": [
+    "qrcode.js",
+    "qrcode.min.js"
+  ],
+  "scripts": {
+    "build": "terser qrcode.js --compress --mangle --comments false -o qrcode.min.js",
+    "test": "node test/test.js qrcode.js && node test/test.js qrcode.min.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/NightfallAutomotive/qrcodegen.git"
+  },
+  "homepage": "https://github.com/NightfallAutomotive/qrcodegen",
+  "keywords": [
+    "qrcode",
+    "qr",
+    "canvas",
+    "svg"
+  ],
+  "author": "Sangmin Shim <ssm0123@gmail.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "jsqr": "1.4.0",
+    "terser": "5.36.0"
+  }
+}
