@@ -12,6 +12,7 @@
 <link rel="stylesheet" href="css/hold-button.css" />
 <script src="qrcode.js"></script>
 <script src="js/hold-button.js"></script>
+<script src="js/qr-export.js"></script>
 </head>
 <body>
 <div class="page">
@@ -51,8 +52,23 @@
 					</div>
 					<button id="generate" class="generate"></button>
 				</div>
-				<div class="qr-card">
-					<div id="qrcode"></div>
+				<div class="result">
+					<div class="qr-card">
+						<div id="qrcode"></div>
+					</div>
+					<fieldset class="output">
+						<legend class="field-label">OUTPUT</legend>
+						<div class="output-row">
+							<div class="segmented">
+								<input type="radio" name="format" id="format-png" value="png" checked />
+								<label for="format-png">PNG</label>
+								<input type="radio" name="format" id="format-svg" value="svg" />
+								<label for="format-svg">SVG</label>
+							</div>
+							<button id="download" class="download" type="button">Download</button>
+						</div>
+						<small id="output-hint">Image, good for sharing and the web.</small>
+					</fieldset>
 				</div>
 			</div>
 		</section>
@@ -65,11 +81,14 @@
 </div>
 
 <script>
+var QR_DARK = "#2e3440";
+var QR_LIGHT = "#eceff4";
+
 var qrcode = new QRCode(document.getElementById("qrcode"), {
 	width : 200,
 	height : 200,
-	colorDark : "#2e3440",
-	colorLight : "#eceff4"
+	colorDark : QR_DARK,
+	colorLight : QR_LIGHT
 });
 
 var elText = document.getElementById("text");
@@ -77,6 +96,9 @@ var elHint = document.getElementById("text-hint");
 var sHint = elHint.textContent;
 // The chosen logo waits here until Generate is held
 var elPendingLogo = null;
+// What the code on screen was made from, so Download matches it
+var sGeneratedText = "";
+var elGeneratedLogo = null;
 
 function makeCode () {
 	if (!elText.value) {
@@ -88,6 +110,8 @@ function makeCode () {
 
 	qrcode.setLogo(elPendingLogo);
 	qrcode.makeCode(elText.value);
+	sGeneratedText = elText.value;
+	elGeneratedLogo = elPendingLogo;
 }
 
 elText.addEventListener("input", function () {
@@ -168,6 +192,40 @@ elLogo.addEventListener("change", function () {
 });
 
 elLogoRemove.addEventListener("click", removeLogo);
+
+var elOutputHint = document.getElementById("output-hint");
+var OUTPUT_HINTS = {
+	png : "Image, good for sharing and the web.",
+	svg : "Vector, stays sharp at any size for print and signage."
+};
+
+function getFormat () {
+	return document.querySelector('input[name="format"]:checked').value;
+}
+
+document.querySelectorAll('input[name="format"]').forEach(function (elRadio) {
+	elRadio.addEventListener("change", function () {
+		elOutputHint.textContent = OUTPUT_HINTS[getFormat()];
+		elOutputHint.classList.remove("is-error");
+	});
+});
+
+document.getElementById("download").addEventListener("click", function () {
+	var sFormat = getFormat();
+
+	QRExport[sFormat]({
+		text : sGeneratedText,
+		colorDark : QR_DARK,
+		colorLight : QR_LIGHT,
+		correctLevel : QRCode.CorrectLevel.H,
+		logo : elGeneratedLogo
+	}).then(function (oBlob) {
+		QRExport.download(oBlob, "qr-code." + sFormat);
+	}, function () {
+		elOutputHint.textContent = "The download couldn't be made. Try again.";
+		elOutputHint.classList.add("is-error");
+	});
+});
 
 new HoldButton(document.getElementById("generate"), {
 	label : "Hold to generate",

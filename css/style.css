@@ -223,14 +223,16 @@ h1 span {
   outline-offset: 1px;
 }
 
-.field small {
+.field small,
+.output small {
   display: block;
   margin-top: 8px;
   color: var(--dim);
   font-size: 12px;
 }
 
-.field small.is-error {
+.field small.is-error,
+.output small.is-error {
   color: var(--red);
 }
 
@@ -263,7 +265,8 @@ h1 span {
 }
 
 .logo-button,
-.logo-remove {
+.logo-remove,
+.download {
   flex: none;
   padding: 10px 16px;
   border: 1px solid var(--border);
@@ -275,7 +278,8 @@ h1 span {
 }
 
 .logo-button:hover,
-.logo-remove:hover {
+.logo-remove:hover,
+.download:hover {
   border-color: var(--cyan);
 }
 
@@ -322,6 +326,85 @@ h1 span {
 .generate.hold-button {
   min-width: 200px;
   border: 1px solid var(--border);
+}
+
+/* ---------- Result & output ---------- */
+
+.result {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  width: 232px;
+}
+
+.output {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.output legend {
+  margin-bottom: 8px;
+  padding: 0;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+}
+
+.output-row {
+  display: flex;
+  gap: 10px;
+}
+
+.segmented {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+  padding: 3px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+}
+
+/* Same visually-hidden pattern as the logo input */
+.segmented input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  opacity: 0;
+}
+
+.segmented label {
+  padding: 7px 12px;
+  border-radius: 5px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+}
+
+.segmented label:hover {
+  color: var(--text);
+}
+
+.segmented input:checked + label {
+  background: rgba(136, 192, 208, 0.16);
+  color: var(--cyan);
+}
+
+.segmented input:focus-visible + label {
+  outline: 2px solid var(--cyan);
+  outline-offset: 1px;
+}
+
+.download {
+  flex: 1;
 }
 
 .qr-card {

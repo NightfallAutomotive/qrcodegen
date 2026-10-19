@@ -126,5 +126,9 @@ var svgLogo = new QRCode(mkEl('g'), { text: 'logo', useSVG: true, logo: logo });
 var svgParts = svgLogo._el.childNodes[0].childNodes;
 check(svgParts.some(function (k) { return k.tagName === 'image' && k.attrs.href === logo.src; }), 'SVG output has no logo image');
 
+// getModuleCount reports the size of the current code
+check(new QRCode(mkEl('div'), { width: 10, height: 10 }).getModuleCount() === 0, 'getModuleCount should be 0 before a code exists');
+check(new QRCode(mkEl('div'), { text: 'a', correctLevel: QRCode.CorrectLevel.L }).getModuleCount() === 21, 'getModuleCount should be 21 for a version 1 code');
+
 console.log(failures ? failures + ' failure(s)' : 'all tests passed (' + process.argv[2] + ')');
 process.exit(failures ? 1 : 0);

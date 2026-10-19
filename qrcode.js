@@ -496,6 +496,15 @@ var QRCode;
 	};
 
 	/**
+	 * Number of modules along one side of the current code
+	 *
+	 * @return {Number} 0 before a code has been made
+	 */
+	QRCode.prototype.getModuleCount = function () {
+		return this._oQRCode ? this._oQRCode.getModuleCount() : 0;
+	};
+
+	/**
 	 * Make the Image from Canvas element
 	 * - It occurs automatically
 	 * 
