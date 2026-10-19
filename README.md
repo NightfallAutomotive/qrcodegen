@@ -2,6 +2,20 @@
 QRCode.js is a javascript library for making QR codes. It draws to an HTML5 Canvas (shown as an `<img>`) or to SVG.
 QRCode.js has no dependencies.
 
+**Live generator: [nightfallqrcode.netlify.app](https://nightfallqrcode.netlify.app/)**: add your logo, pick colours and download as PNG or SVG.
+
+## Screenshots
+
+<p align="center"><img src="docs/screenshots/desktop.png" alt="The Nightfall QR code generator with the NF logo in the centre of a generated code" width="820"></p>
+
+<table>
+<tr>
+<td align="center"><img src="docs/screenshots/sticker-peel.png" alt="The QR preview as a sticker with its corner peeled back" width="240"><br>Peelable sticker preview</td>
+<td align="center"><img src="docs/screenshots/nord-colours.png" alt="The Nord colour picker open, with a Frost cyan background code" width="380"><br>Nord colour picker</td>
+<td align="center"><img src="docs/screenshots/phone.png" alt="The generator on a phone" width="170"><br>On a phone</td>
+</tr>
+</table>
+
 ## Basic Usages
 ```html
 <div id="qrcode"></div>
