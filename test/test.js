@@ -5,7 +5,13 @@ var vm = require('vm');
 var jsQR = require('jsqr');
 
 function load(file) {
-	var ctx2d = { fillRect: function () {}, clearRect: function () {} };
+	var ctx2d = {
+		calls: [],
+		fillRect: function () {}, clearRect: function () {}, beginPath: function () {}, fill: function () {},
+		roundRect: function () { this.calls.push(['roundRect'].concat([].slice.call(arguments))); },
+		drawImage: function () { this.calls.push(['drawImage'].concat([].slice.call(arguments, 1))); }
+	};
+	mkEl.renders = 0;
 	function mkEl(tag) {
 		return {
 			tagName: tag, style: {}, childNodes: [], attrs: {},
@@ -15,7 +21,7 @@ function load(file) {
 			get lastChild() { return this.childNodes[this.childNodes.length - 1]; },
 			setAttribute: function (k, v) { this.attrs[k] = v; },
 			getContext: function () { return ctx2d; },
-			toDataURL: function () { return 'data:image/png;base64,'; }
+			toDataURL: function () { return 'data:image/png;base64,' + (++mkEl.renders); }
 		};
 	}
 	var sandbox = {
@@ -29,7 +35,7 @@ function load(file) {
 	};
 	vm.createContext(sandbox);
 	vm.runInContext(fs.readFileSync(file, 'utf8') + '\n;this.__QR = QRCode;', sandbox);
-	return { QRCode: sandbox.__QR, mkEl: mkEl };
+	return { QRCode: sandbox.__QR, mkEl: mkEl, ctx2d: ctx2d };
 }
 
 function decode(model) {
@@ -45,7 +51,7 @@ function decode(model) {
 }
 
 var lib = load(process.argv[2]);
-var QRCode = lib.QRCode, mkEl = lib.mkEl;
+var QRCode = lib.QRCode, mkEl = lib.mkEl, ctx2d = lib.ctx2d;
 var failures = 0;
 function check(cond, msg) {
 	if (!cond) {
@@ -98,6 +104,27 @@ check(canvas.width === 200 && canvas.style.width === '100px', 'canvas not scaled
 check(img.style.display === 'block' && img.style.width === '100px', 'image not shown at CSS size');
 hiDPI.clear();
 check(img.style.display === 'none', 'clear() left the image visible');
+
+// Logo is drawn centred on a plate, keeps its aspect ratio, and can be removed
+var logo = { src: 'data:image/png;base64,AAAA', naturalWidth: 200, naturalHeight: 100 };
+var elLogoCode = mkEl('div');
+var logoCode = new QRCode(elLogoCode, { text: 'logo', width: 100, height: 100 });
+var src = elLogoCode.childNodes[1].src;
+ctx2d.calls = [];
+logoCode.setLogo(logo);
+var plate = ctx2d.calls.filter(function (c) { return c[0] === 'roundRect'; })[0];
+var drawn = ctx2d.calls.filter(function (c) { return c[0] === 'drawImage'; })[0];
+check(plate && plate[3] === 44 && plate[1] === 78, 'logo plate not centred at 22% of the 200px canvas: ' + plate);
+check(drawn && Math.abs(drawn[3] / drawn[4] - 2) < 1e-9, 'logo aspect ratio not kept: ' + drawn);
+check(drawn && Math.abs(drawn[1] + drawn[3] / 2 - 100) < 1e-9 && Math.abs(drawn[2] + drawn[4] / 2 - 100) < 1e-9, 'logo not centred: ' + drawn);
+check(elLogoCode.childNodes[1].src !== src, 'setLogo did not refresh the image');
+ctx2d.calls = [];
+logoCode.setLogo(null);
+check(ctx2d.calls.length === 0, 'logo still drawn after setLogo(null)');
+
+var svgLogo = new QRCode(mkEl('g'), { text: 'logo', useSVG: true, logo: logo });
+var svgParts = svgLogo._el.childNodes[0].childNodes;
+check(svgParts.some(function (k) { return k.tagName === 'image' && k.attrs.href === logo.src; }), 'SVG output has no logo image');
 
 console.log(failures ? failures + ' failure(s)' : 'all tests passed (' + process.argv[2] + ')');
 process.exit(failures ? 1 : 0);

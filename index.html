@@ -28,14 +28,27 @@
 			<div class="panel-header">
 				<p class="eyebrow">NIGHTFALL TOOLS // QR</p>
 				<h1 id="page-title">QR code <span>generator.</span></h1>
-				<p class="intro">Type a link or any text, then hold the button to generate your code.</p>
+				<p class="intro">Type a link or any text, add your logo if you like, then hold the button to generate your code.</p>
 			</div>
 
 			<div class="panel-body">
-				<div class="field">
-					<label for="text">TEXT OR LINK</label>
-					<input id="text" type="text" value="https://www.nightfallautomotive.co.uk/" />
-					<small id="text-hint">Works with any text, including accents and emoji.</small>
+				<div class="controls">
+					<div class="field">
+						<label for="text">TEXT OR LINK</label>
+						<input id="text" type="text" value="https://www.nightfallautomotive.co.uk/" />
+						<small id="text-hint">Works with any text, including accents and emoji.</small>
+					</div>
+					<div class="field">
+						<span class="field-label" id="logo-label">YOUR LOGO <em>(OPTIONAL)</em></span>
+						<div class="logo-upload">
+							<input id="logo" class="logo-input" type="file" accept="image/png,image/jpeg,image/svg+xml,image/webp,image/gif" aria-labelledby="logo-label" />
+							<label for="logo" class="logo-button" id="logo-button">Upload logo</label>
+							<img id="logo-preview" class="logo-preview" alt="" hidden />
+							<span id="logo-name" class="logo-name"></span>
+							<button id="logo-remove" class="logo-remove" type="button" hidden>Remove</button>
+						</div>
+						<small id="logo-hint">PNG, JPG, SVG or WebP up to 5 MB. It goes in the centre when you hold Generate, and stays on your device.</small>
+					</div>
 					<button id="generate" class="generate"></button>
 				</div>
 				<div class="qr-card">
@@ -62,6 +75,8 @@ var qrcode = new QRCode(document.getElementById("qrcode"), {
 var elText = document.getElementById("text");
 var elHint = document.getElementById("text-hint");
 var sHint = elHint.textContent;
+// The chosen logo waits here until Generate is held
+var elPendingLogo = null;
 
 function makeCode () {
 	if (!elText.value) {
@@ -71,6 +86,7 @@ function makeCode () {
 		return;
 	}
 
+	qrcode.setLogo(elPendingLogo);
 	qrcode.makeCode(elText.value);
 }
 
@@ -78,6 +94,80 @@ elText.addEventListener("input", function () {
 	elHint.textContent = sHint;
 	elHint.classList.remove("is-error");
 });
+
+var elLogo = document.getElementById("logo");
+var elLogoButton = document.getElementById("logo-button");
+var elLogoPreview = document.getElementById("logo-preview");
+var elLogoName = document.getElementById("logo-name");
+var elLogoRemove = document.getElementById("logo-remove");
+var elLogoHint = document.getElementById("logo-hint");
+var sLogoHint = elLogoHint.textContent;
+var LOGO_MAX_BYTES = 5 * 1024 * 1024;
+
+function showLogoError (sMessage) {
+	elLogoHint.textContent = sMessage;
+	elLogoHint.classList.add("is-error");
+	elLogo.value = "";
+}
+
+function removeLogo () {
+	elPendingLogo = null;
+	elLogo.value = "";
+	elLogoHint.textContent = sLogoHint;
+	elLogoHint.classList.remove("is-error");
+	elLogoPreview.hidden = true;
+	elLogoPreview.removeAttribute("src");
+	elLogoName.textContent = "";
+	elLogoRemove.hidden = true;
+	elLogoButton.textContent = "Upload logo";
+}
+
+elLogo.addEventListener("change", function () {
+	var oFile = elLogo.files[0];
+
+	elLogoHint.textContent = sLogoHint;
+	elLogoHint.classList.remove("is-error");
+
+	if (!oFile) {
+		return;
+	}
+
+	if (!/^image\//.test(oFile.type)) {
+		showLogoError("That file isn't an image. Choose a PNG, JPG, SVG or WebP.");
+		return;
+	}
+
+	if (oFile.size > LOGO_MAX_BYTES) {
+		showLogoError("That image is over 5 MB. Choose a smaller one.");
+		return;
+	}
+
+	// Read the file locally; nothing is uploaded anywhere
+	var oReader = new FileReader();
+
+	oReader.onload = function () {
+		var elImage = new Image();
+
+		elImage.onload = function () {
+			elPendingLogo = elImage;
+			elLogoPreview.src = elImage.src;
+			elLogoPreview.hidden = false;
+			elLogoName.textContent = oFile.name;
+			elLogoRemove.hidden = false;
+			elLogoButton.textContent = "Change logo";
+		};
+		elImage.onerror = function () {
+			showLogoError("That image couldn't be opened. Try a different file.");
+		};
+		elImage.src = oReader.result;
+	};
+	oReader.onerror = function () {
+		showLogoError("That file couldn't be read. Try again.");
+	};
+	oReader.readAsDataURL(oFile);
+});
+
+elLogoRemove.addEventListener("click", removeLogo);
 
 new HoldButton(document.getElementById("generate"), {
 	label : "Hold to generate",

@@ -187,7 +187,20 @@ h1 span {
   padding: 30px 34px;
 }
 
-.field label {
+.controls {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 24px;
+  min-width: 0;
+}
+
+.field {
+  width: 100%;
+}
+
+.field > label,
+.field-label {
   display: block;
   margin-bottom: 8px;
   color: var(--muted);
@@ -221,9 +234,92 @@ h1 span {
   color: var(--red);
 }
 
+.field-label em {
+  color: var(--dim);
+  font-style: normal;
+  font-weight: 600;
+}
+
+/* ---------- Logo upload ---------- */
+
+.logo-upload {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 46px;
+}
+
+/* Visually hidden but still focusable, so the label below acts as the button.
+   The clip also stops Firefox's file-input internals catching clicks meant for Remove. */
+.logo-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  opacity: 0;
+}
+
+.logo-button,
+.logo-remove {
+  flex: none;
+  padding: 10px 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.logo-button:hover,
+.logo-remove:hover {
+  border-color: var(--cyan);
+}
+
+.logo-input:focus-visible + .logo-button {
+  outline: 2px solid var(--cyan);
+  outline-offset: 1px;
+}
+
+.logo-remove {
+  border-color: transparent;
+  background: transparent;
+  color: var(--muted);
+}
+
+.logo-remove:hover {
+  border-color: var(--red);
+  color: var(--text);
+}
+
+.logo-preview {
+  flex: none;
+  width: 46px;
+  height: 46px;
+  padding: 5px;
+  border-radius: 8px;
+  background: var(--qr-light);
+  object-fit: contain;
+}
+
+.logo-preview[hidden] {
+  display: none;
+}
+
+.logo-name {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* Doubled class so it outranks .hold-button, which loads later */
 .generate.hold-button {
-  margin-top: 18px;
   min-width: 200px;
   border: 1px solid var(--border);
 }
@@ -271,8 +367,13 @@ h1 span {
     justify-items: center;
   }
 
-  .field {
+  .controls {
     width: 100%;
+  }
+
+  /* No room for the name; the preview shows which logo is in use */
+  .logo-name {
+    display: none;
   }
 
   .page-footer {

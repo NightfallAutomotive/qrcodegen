@@ -33,7 +33,11 @@ and you can use some methods
 ```js
 qrcode.clear(); // clear the code.
 qrcode.makeCode("https://example.com"); // make another code.
+qrcode.setLogo(imageElement); // draw a loaded <img> in the middle of the code.
+qrcode.setLogo(null); // remove the logo.
 ```
+
+A logo can also be passed up front with the `logo` option, and `logoSize` (default `0.22`) sets the size of its light backing square as a fraction of the code's width. Keep `correctLevel` at `H` when using a logo so the code still scans.
 
 Text is encoded as UTF-8, so any Unicode text (including emoji) works. Text longer than a version 40 code can hold throws `Error("Too long data")`.
 

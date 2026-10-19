@@ -154,6 +154,30 @@ var QRCode;
 	if(bit){this.buffer[bufIndex]|=(0x80>>>(this.length%8));}
 	this.length++;}};var QRCodeLimitLength=[[17,14,11,7],[32,26,20,14],[53,42,32,24],[78,62,46,34],[106,84,60,44],[134,106,74,58],[154,122,86,64],[192,152,108,84],[230,180,130,98],[271,213,151,119],[321,251,177,137],[367,287,203,155],[425,331,241,177],[458,362,258,194],[520,412,292,220],[586,450,322,250],[644,504,364,280],[718,560,394,310],[792,624,442,338],[858,666,482,382],[929,711,509,403],[1003,779,565,439],[1091,857,611,461],[1171,911,661,511],[1273,997,715,535],[1367,1059,751,593],[1465,1125,805,625],[1528,1190,868,658],[1628,1264,908,698],[1732,1370,982,742],[1840,1452,1030,790],[1952,1538,1112,842],[2068,1628,1168,898],[2188,1722,1228,958],[2303,1809,1283,983],[2431,1911,1351,1051],[2563,1989,1423,1093],[2699,2099,1499,1139],[2809,2213,1579,1219],[2953,2331,1663,1273]];
 	
+	/**
+	 * Where to draw the centre logo, in the same units as nWidth and nHeight
+	 *
+	 * @private
+	 * @param {Number} nWidth
+	 * @param {Number} nHeight
+	 * @param {Object} htOption QRCode Options
+	 * @return {Object} the plate behind the logo and the logo itself
+	 */
+	function _getLogoBox(nWidth, nHeight, htOption) {
+		var elLogo = htOption.logo;
+		var nPlate = Math.min(nWidth, nHeight) * htOption.logoSize;
+		var nInner = nPlate * 0.8;
+		var nRatio = (elLogo.naturalWidth || elLogo.width) / (elLogo.naturalHeight || elLogo.height) || 1;
+		// Fit the logo inside the plate without stretching it
+		var nLogoWidth = nRatio >= 1 ? nInner : nInner * nRatio;
+		var nLogoHeight = nRatio >= 1 ? nInner / nRatio : nInner;
+
+		return {
+			plate : { x : (nWidth - nPlate) / 2, y : (nHeight - nPlate) / 2, size : nPlate, radius : nPlate * 0.16 },
+			logo : { x : (nWidth - nLogoWidth) / 2, y : (nHeight - nLogoHeight) / 2, width : nLogoWidth, height : nLogoHeight }
+		};
+	}
+
 	var svgDrawer = (function() {
 
 		var Drawing = function (el, htOption) {
@@ -191,6 +215,13 @@ var QRCode;
 
 			svg.appendChild(makeSVG("rect", {"fill": _htOption.colorLight, "width": "100%", "height": "100%"}));
 			svg.appendChild(makeSVG("path", {"fill": _htOption.colorDark, "d": aPath.join("")}));
+
+			if (_htOption.logo) {
+				var oBox = _getLogoBox(nCount, nCount, _htOption);
+
+				svg.appendChild(makeSVG("rect", {"fill": _htOption.colorLight, "x": oBox.plate.x, "y": oBox.plate.y, "width": oBox.plate.size, "height": oBox.plate.size, "rx": oBox.plate.radius, "shape-rendering": "auto"}));
+				svg.appendChild(makeSVG("image", {"href": _htOption.logo.src, "x": oBox.logo.x, "y": oBox.logo.y, "width": oBox.logo.width, "height": oBox.logo.height}));
+			}
 		};
 		Drawing.prototype.clear = function () {
 			while (this._el.hasChildNodes())
@@ -264,7 +295,24 @@ var QRCode;
 					}
 				}
 			}
-			
+
+			if (_htOption.logo) {
+				var oBox = _getLogoBox(this._elCanvas.width, this._elCanvas.height, _htOption);
+				var oPlate = oBox.plate;
+
+				_oContext.fillStyle = _htOption.colorLight;
+				_oContext.beginPath();
+
+				if (_oContext.roundRect) {
+					_oContext.roundRect(oPlate.x, oPlate.y, oPlate.size, oPlate.size, oPlate.radius);
+				} else {
+					_oContext.rect(oPlate.x, oPlate.y, oPlate.size, oPlate.size);
+				}
+
+				_oContext.fill();
+				_oContext.drawImage(_htOption.logo, oBox.logo.x, oBox.logo.y, oBox.logo.width, oBox.logo.height);
+			}
+
 			this._bIsPainted = true;
 		};
 			
@@ -376,14 +424,18 @@ var QRCode;
 	 * @param {String} [vOption.colorLight="#ffffff"]
 	 * @param {QRCode.CorrectLevel} [vOption.correctLevel=QRCode.CorrectLevel.H] [L|M|Q|H] 
 	 * @param {Boolean} [vOption.useSVG=false] draw an SVG instead of a canvas image
+	 * @param {HTMLImageElement} [vOption.logo] loaded image drawn in the middle of the code
+	 * @param {Number} [vOption.logoSize=0.22] logo backing size as a fraction of the code width
 	 */
 	QRCode = function (el, vOption) {
 		this._htOption = {
-			width : 256, 
+			width : 256,
 			height : 256,
 			colorDark : "#000000",
 			colorLight : "#ffffff",
-			correctLevel : QRErrorCorrectLevel.H
+			correctLevel : QRErrorCorrectLevel.H,
+			logo : null,
+			logoSize : 0.22
 		};
 		
 		if (typeof vOption === 'string') {
@@ -427,7 +479,22 @@ var QRCode;
 		this._oDrawing.draw(this._oQRCode);			
 		this.makeImage();
 	};
-	
+
+	/**
+	 * Draw a logo in the middle of the code, or remove it
+	 * - Keep correctLevel at H so the code still scans with the logo covering it
+	 *
+	 * @param {HTMLImageElement|null} elLogo a fully loaded image, or null to remove the logo
+	 */
+	QRCode.prototype.setLogo = function (elLogo) {
+		this._htOption.logo = elLogo || null;
+
+		if (this._oQRCode) {
+			this._oDrawing.draw(this._oQRCode);
+			this.makeImage();
+		}
+	};
+
 	/**
 	 * Make the Image from Canvas element
 	 * - It occurs automatically
