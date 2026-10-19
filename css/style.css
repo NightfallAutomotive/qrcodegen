@@ -168,7 +168,7 @@ h1 {
   letter-spacing: -0.045em;
 }
 
-h1 span {
+h1 .accent {
   color: var(--purple);
 }
 

@@ -13,6 +13,7 @@
 <script src="qrcode.js"></script>
 <script src="js/hold-button.js"></script>
 <script src="js/qr-export.js"></script>
+<script src="js/decrypted-text.js"></script>
 </head>
 <body>
 <div class="page">
@@ -28,7 +29,7 @@
 		<section class="panel" aria-labelledby="page-title">
 			<div class="panel-header">
 				<p class="eyebrow">NIGHTFALL TOOLS // QR</p>
-				<h1 id="page-title">QR code <span>generator.</span></h1>
+				<h1 id="page-title">QR code <span class="accent">generator.</span></h1>
 				<p class="intro">Type a link or any text, add your logo if you like, then hold the button to generate your code.</p>
 			</div>
 
@@ -75,7 +76,7 @@
 	</main>
 
 	<footer class="page-footer">
-		<span>© NIGHTFALL AUTOMOTIVE</span>
+		<span>© <a href="https://nightfallautomotive.co.uk">NIGHTFALL AUTOMOTIVE</a></span>
 		<span>ECU REMAPPING · TUNING · DIAGNOSTICS</span>
 	</footer>
 </div>
@@ -248,6 +249,25 @@ new HoldButton(document.getElementById("generate"), {
 });
 
 makeCode();
+
+// Decoration only, so it runs last and can never stop the generator above
+new DecryptedText(document.getElementById("page-title"), {
+	animateOn : "inViewHover",
+	effect : "scramble",
+	sequential : true,
+	revealDirection : "start",
+	speed : 60,
+	maxIterations : 10,
+	hoverRadius : 100,
+	scrambleColor : "#a3be8c",
+	loop : false,
+	loopDelay : 2000,
+	useOriginalCharsOnly : false,
+	characters : "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!@#$%^&*()_+",
+	className : "revealed",
+	encryptedClassName : "encrypted",
+	clickMode : "once"
+});
 </script>
 </body>
 </html>
