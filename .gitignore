@@ -3,3 +3,4 @@
 .idea
 .project
 node_modules
+.wrangler

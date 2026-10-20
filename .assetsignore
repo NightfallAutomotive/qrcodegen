@@ -1,0 +1,14 @@
+# Files Cloudflare must not upload as part of the site. The page only needs
+# index.html, assets/, css/, js/ and qrcode.js.
+node_modules
+.git
+.wrangler
+docs
+test
+package.json
+package-lock.json
+bower.json
+README.md
+wrangler.jsonc
+.assetsignore
+.gitignore

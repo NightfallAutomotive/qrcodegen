@@ -1,0 +1,7 @@
+{
+  // Cloudflare Workers static site: serve the generator from the repo root.
+  // .assetsignore keeps everything else (node_modules, tests...) out.
+  "name": "qrcodegen",
+  "compatibility_date": "2026-10-19",
+  "assets": { "directory": "." }
+}
