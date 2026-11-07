@@ -530,8 +530,11 @@ StickerPeel = function (parent, options) {
 
     const load = src => {
       loadedSrc = src;
-      sticker.ready = false;
-      if (!src) return;
+      // Keep drawing the current image until the new one has loaded, so a swap never blanks the sticker
+      if (!src) {
+        sticker.ready = false;
+        return;
+      }
       const image = new Image();
       image.crossOrigin = 'anonymous';
       image.decoding = 'async';

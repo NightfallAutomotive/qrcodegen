@@ -77,15 +77,6 @@
   --lift: rgba(46, 52, 64, 0.22);
 }
 
-/* the Generate button is coloured from script; in light mode it turns pale with dark text */
-[data-mode="light"] .hold-button {
-  --hb-bg: #f7f8fa !important;
-  --hb-fill: #2e4a72 !important;
-  --hb-text: #2e3440 !important;
-  --hb-fill-text: #ffffff !important;
-  box-shadow: inset 0 0 0 1px var(--border);
-}
-
 /* while switching, colours ease across instead of jumping */
 html.theming,
 html.theming * {
@@ -174,47 +165,51 @@ main {
   color: var(--text);
 }
 
-.brand-logo {
+/* the target reticle is drawn from its SVG as a mask, so it takes QR's purple in either mode */
+.brand-mark {
   display: block;
-  width: auto;
-  height: 36px;
+  width: 40px;
+  height: 40px;
+  background: var(--purple);
+  -webkit-mask: url("../assets/logo/reticle.svg") center / contain no-repeat;
+  mask: url("../assets/logo/reticle.svg") center / contain no-repeat;
+}
+
+.brand-rule {
+  display: block;
+  width: 1px;
+  align-self: stretch;
+  margin-block: 4px;
+  background: var(--header-line);
 }
 
 .brand-copy {
-  display: flex;
-  flex-direction: column;
-  line-height: 1.15;
-  letter-spacing: 0.15em;
+  display: grid;
+  gap: 6px;
+  line-height: 1;
 }
 
 .brand-copy strong {
   font-size: 15px;
   font-weight: 900;
+  letter-spacing: 0.28em;
 }
 
 .brand-copy > span {
-  margin-top: 5px;
   color: var(--muted);
-  font-size: 10px;
+  font-size: 10.5px;
   letter-spacing: 0.3em;
+}
+
+.brand-copy b {
+  color: var(--purple);
+  font-weight: 800;
 }
 
 .header-links {
   display: flex;
   align-items: center;
-  gap: 22px;
-}
-
-.page-tag {
-  color: var(--muted);
-  font-size: 11px;
-  letter-spacing: 0.18em;
-}
-
-.page-tag strong {
-  margin-left: 8px;
-  color: var(--purple);
-  font-size: 20px;
+  gap: 12px;
 }
 
 /* the sun/moon switch (as on Nightfall Tools, RemapData and Statement Bridge):
@@ -257,6 +252,53 @@ main {
   transform: scale(0.92);
 }
 
+/* button to the main Nightfall Automotive site; same height, border and press as the sun/moon switch */
+.site-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 12px 0 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  white-space: nowrap;
+  text-decoration: none;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 100ms var(--ease-out), color 150ms ease, border-color 150ms ease;
+}
+
+.site-button svg {
+  width: 14px;
+  height: 14px;
+  flex: none;
+  transition: transform 150ms var(--ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .site-button:hover {
+    border-color: var(--purple);
+    color: var(--text);
+  }
+
+  .site-button:hover svg {
+    transform: translate(1px, -1px);
+  }
+}
+
+.site-button:active {
+  transform: scale(0.96);
+}
+
+.site-button:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 3px;
+}
+
 .theme:focus-visible {
   outline: 2px solid var(--cyan);
   outline-offset: 3px;
@@ -271,7 +313,9 @@ main {
 
 @media (prefers-reduced-motion: reduce) {
   .theme,
-  .theme svg {
+  .theme svg,
+  .site-button,
+  .site-button svg {
     transition: none;
   }
 }
@@ -289,30 +333,22 @@ main {
   border-bottom: 1px solid var(--border);
 }
 
-.eyebrow {
-  margin: 0 0 10px;
-  color: var(--cyan);
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.2em;
-}
-
-h1 {
-  margin: 0;
-  color: var(--text);
-  font-size: clamp(30px, 4vw, 52px);
-  font-weight: 900;
-  line-height: 1.08;
-  letter-spacing: -0.045em;
-}
-
-h1 .accent {
-  color: var(--purple);
+/* the page title is in the logo, so the heading is for screen readers only */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .intro {
   max-width: 650px;
-  margin: 14px 0 0;
+  margin: 0;
   color: var(--muted);
   font-size: 14px;
 }
@@ -347,7 +383,8 @@ h1 .accent {
   letter-spacing: 0.2em;
 }
 
-.field input {
+/* text boxes only; the corners slider has its own styles */
+.field input:not([type="range"]) {
   width: 100%;
   padding: 12px 14px;
   border: 1px solid var(--border);
@@ -356,7 +393,7 @@ h1 .accent {
   color: var(--text);
 }
 
-.field input:focus {
+.field input:not([type="range"]):focus {
   outline: 2px solid var(--cyan);
   outline-offset: 1px;
 }
@@ -649,12 +686,6 @@ h1 .accent {
   cursor: pointer;
 }
 
-/* Doubled class so it outranks .hold-button, which loads later */
-.generate.hold-button {
-  min-width: 200px;
-  border: 1px solid var(--border);
-}
-
 /* ---------- Result & output ---------- */
 
 .result {
@@ -780,8 +811,20 @@ h1 .accent {
 /* ---------- Responsive ---------- */
 
 @media (max-width: 640px) {
-  .page-tag {
-    display: none;
+  .header-links {
+    gap: 10px;
+  }
+
+  /* NIGHTFALL over AUTOMOTIVE, so the button fits beside the logo on a phone */
+  .site-button {
+    padding: 0 10px;
+    gap: 6px;
+    font-size: 9px;
+    line-height: 1.2;
+  }
+
+  .site-name span {
+    display: block;
   }
 
   .panel-header,

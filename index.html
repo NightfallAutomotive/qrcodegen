@@ -16,12 +16,9 @@
 <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png" />
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
 <link rel="stylesheet" href="css/style.css" />
-<link rel="stylesheet" href="css/hold-button.css" />
 <link rel="stylesheet" href="css/sticker-peel.css" />
 <script src="qrcode.js"></script>
-<script src="js/hold-button.js"></script>
 <script src="js/qr-export.js"></script>
-<script src="js/decrypted-text.js"></script>
 <script src="js/nord-picker.js"></script>
 <script src="js/sticker-peel.js"></script>
 <script src="js/theme.js" defer></script>
@@ -29,25 +26,28 @@
 <body>
 <div class="page">
 	<header class="page-header">
-		<a class="brand" href="https://www.nightfallautomotive.co.uk/" aria-label="Nightfall Automotive home">
-			<img class="brand-logo" src="assets/nf-logo.png" alt="" width="50" height="36" />
-			<span class="brand-copy"><strong>NIGHTFALL</strong><span>AUTOMOTIVE</span></span>
+		<a class="brand" href="https://www.nightfallautomotive.co.uk/" aria-label="QR Generator, by Nightfall Automotive (home)">
+			<span class="brand-mark" aria-hidden="true"></span>
+			<i class="brand-rule" aria-hidden="true"></i>
+			<span class="brand-copy" aria-hidden="true"><strong>NIGHTFALL</strong><span><b>QR</b> GENERATOR</span></span>
 		</a>
 		<div class="header-links">
-			<span class="page-tag">TOOLS <strong>QR</strong></span>
 			<button type="button" class="theme" id="theme" aria-label="Switch to light mode">
 				<svg class="sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2" fill="currentColor" /><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6" stroke="currentColor" stroke-width="2" stroke-linecap="round" /></svg>
 				<svg class="moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z" fill="currentColor" /></svg>
 			</button>
+			<a class="site-button" href="https://www.nightfallautomotive.co.uk/">
+				<span class="site-name">NIGHTFALL <span>AUTOMOTIVE</span></span>
+				<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+			</a>
 		</div>
 	</header>
 
 	<main>
 		<section class="panel" aria-labelledby="page-title">
 			<div class="panel-header">
-				<p class="eyebrow">NIGHTFALL TOOLS // QR</p>
-				<h1 id="page-title">QR code <span class="accent">generator.</span></h1>
-				<p class="intro">Type a link or any text, add your logo if you like, then hold the button to generate your code.</p>
+				<h1 id="page-title" class="sr-only">QR Code Generator</h1>
+				<p class="intro">Type a link or any text, add your logo if you like, and the code updates as you go.</p>
 			</div>
 
 			<div class="panel-body">
@@ -66,7 +66,7 @@
 							<span id="logo-name" class="logo-name"></span>
 							<button id="logo-remove" class="logo-remove" type="button" hidden>Remove</button>
 						</div>
-						<small id="logo-hint">PNG, JPG, SVG or WebP up to 5 MB. It goes in the centre when you hold Generate, and stays on your device.</small>
+						<small id="logo-hint">PNG, JPG, SVG or WebP up to 5 MB. It goes in the centre and stays on your device.</small>
 					</div>
 					<div class="field">
 						<span class="field-label">STYLE</span>
@@ -84,9 +84,8 @@
 								<input id="radius" type="range" min="0" max="15" step="1" value="5" />
 							</label>
 						</div>
-						<small id="style-hint">Applied when you hold Generate. Download matches what you see.</small>
+						<small id="style-hint">Download matches what you see.</small>
 					</div>
-					<button id="generate" class="generate"></button>
 				</div>
 				<div class="result">
 					<div class="qr-card">
@@ -134,18 +133,19 @@ var qrcode = new QRCode(document.getElementById("qrcode"), {
 var elText = document.getElementById("text");
 var elHint = document.getElementById("text-hint");
 var sHint = elHint.textContent;
-// The chosen logo waits here until Generate is held
+// The chosen logo, drawn in the centre of the code
 var elPendingLogo = null;
 // The preview drawn as a peelable sticker, when WebGL2 is available
 var oSticker = null;
 // What the code on screen was made from, so Download matches it
 var oGenerated = null;
 
-function makeCode () {
+// bReplay: peel the sticker off and on again (only for the first code)
+function makeCode (bReplay) {
+	// With the box empty, keep the last code on screen and say why it isn't changing
 	if (!elText.value) {
-		elHint.textContent = "Type some text or a link first.";
+		elHint.textContent = "Type some text or a link to make a code.";
 		elHint.classList.add("is-error");
-		elText.focus();
 		return;
 	}
 
@@ -161,13 +161,24 @@ function makeCode () {
 	oStyle.text = elText.value;
 	oGenerated = oStyle;
 
-	// A fresh code goes on as a fresh sticker
-	if (oSticker) oSticker.setImage(document.querySelector("#qrcode img").src, true);
+	if (oSticker) oSticker.setImage(document.querySelector("#qrcode img").src, !!bReplay);
+}
+
+// Live preview: redraw on the next frame, once however many changes came in (dragging the slider fires many)
+var nRedraw = 0;
+
+function scheduleCode () {
+	if (nRedraw) return;
+	nRedraw = requestAnimationFrame(function () {
+		nRedraw = 0;
+		makeCode();
+	});
 }
 
 elText.addEventListener("input", function () {
 	elHint.textContent = sHint;
 	elHint.classList.remove("is-error");
+	scheduleCode();
 });
 
 var elLogo = document.getElementById("logo");
@@ -195,6 +206,7 @@ function removeLogo () {
 	elLogoName.textContent = "";
 	elLogoRemove.hidden = true;
 	elLogoButton.textContent = "Upload logo";
+	makeCode();
 }
 
 elLogo.addEventListener("change", function () {
@@ -230,6 +242,7 @@ elLogo.addEventListener("change", function () {
 			elLogoName.textContent = oFile.name;
 			elLogoRemove.hidden = false;
 			elLogoButton.textContent = "Change logo";
+			makeCode();
 		};
 		elImage.onerror = function () {
 			showLogoError("That image couldn't be opened. Try a different file.");
@@ -274,10 +287,11 @@ function checkStyle () {
 	elStyleHint.classList.toggle("is-error", !!sWarning);
 }
 
-elColorDark.addEventListener("input", checkStyle);
-elColorLight.addEventListener("input", checkStyle);
+elColorDark.addEventListener("input", function () { checkStyle(); scheduleCode(); });
+elColorLight.addEventListener("input", function () { checkStyle(); scheduleCode(); });
 elRadius.addEventListener("input", function () {
 	elRadiusValue.textContent = elRadius.value + "%";
+	scheduleCode();
 });
 
 // Browsers can restore these inputs on reload, so sync the labels to them
@@ -319,46 +333,7 @@ document.getElementById("download").addEventListener("click", function () {
 	});
 });
 
-new HoldButton(document.getElementById("generate"), {
-	label : "Hold to generate",
-	doneLabel : "Generated",
-	backgroundColor : "#2e3440",
-	fillColor : "#a3be8c",
-	textColor : "#eceff4",
-	fillTextColor : "#eceff4",
-	size : "md",
-	radius : 14,
-	fillDirection : "right",
-	holdTime : 1000,
-	releaseTime : 200,
-	pressScale : 0.97,
-	wave : true,
-	waveAmplitude : 9,
-	glow : true,
-	resetAfter : 1200,
-	onHold : makeCode
-});
-
 makeCode();
-
-// Decoration only, so it runs last and can never stop the generator above
-new DecryptedText(document.getElementById("page-title"), {
-	animateOn : "inViewHover",
-	effect : "scramble",
-	sequential : true,
-	revealDirection : "start",
-	speed : 60,
-	maxIterations : 10,
-	hoverRadius : 100,
-	scrambleColor : "#a3be8c",
-	loop : false,
-	loopDelay : 2000,
-	useOriginalCharsOnly : false,
-	characters : "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!@#$%^&*()_+",
-	className : "revealed",
-	encryptedClassName : "encrypted",
-	clickMode : "once"
-});
 
 // WebGL decoration goes last of all
 var elCard = document.querySelector(".qr-card");
