@@ -25,8 +25,6 @@
   /* QR codes stay dark-on-light so every scanner can read them */
   --qr-dark: #2e3440;
   --qr-light: #eceff4;
-
-  --glow-top: rgba(136, 192, 208, 0.08);
   --header-line: rgba(136, 192, 208, 0.16);
   --edge: rgba(255, 255, 255, 0.18);
   --lift: rgba(0, 0, 0, 0.45);
@@ -50,7 +48,6 @@
     --purple: #7b4f74;
     --green: #2e4a72;
     --red: #a3404a;
-    --glow-top: rgba(94, 129, 172, 0.14);
     --header-line: rgba(71, 101, 136, 0.2);
     --edge: rgba(46, 52, 64, 0.2);
     --lift: rgba(46, 52, 64, 0.22);
@@ -71,7 +68,6 @@
   --purple: #7b4f74;
   --green: #2e4a72;
   --red: #a3404a;
-  --glow-top: rgba(94, 129, 172, 0.14);
   --header-line: rgba(71, 101, 136, 0.2);
   --edge: rgba(46, 52, 64, 0.2);
   --lift: rgba(46, 52, 64, 0.22);
@@ -102,9 +98,7 @@ body {
   margin: 0;
   min-height: 100vh;
   min-height: 100dvh;
-  background:
-    radial-gradient(ellipse at 50% 0%, var(--glow-top), transparent 48%),
-    var(--bg-deep);
+  background: var(--bg-deep);
   color: var(--text);
   font-family: var(--font);
   font-size: 15px;
